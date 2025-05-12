@@ -1,0 +1,79 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.betapig'
+version = '2.2.2'
+
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs 'lib'
+    }
+}
+
+dependencies {
+    implementation files('lib/jinput.jar')
+    implementation files('lib/lwjgl.jar')
+    implementation files('lib/lwjgl_util.jar')
+    implementation files('lib/minecraft.jar')
+    implementation 'org.json:json:20230227'
+    implementation 'commons-io:commons-io:2.13.0'
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.0'
+    implementation 'org.glassfish.jaxb:jaxb-runtime:4.0.3'
+}
+
+application {
+    mainClass = 'com.betapig.launcher.BetaPigLauncher'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+        resources {
+            srcDirs = ['resources', '.betapig']
+        }
+    }
+}
+
+jar {
+    from('.betapig') {
+        into('.betapig')
+    }
+}
+
+// Copy lib files to resources
+task copyLibs(type: Copy) {
+    from 'lib'
+    into 'resources/lib'
+    include '*.jar'
+}
+
+processResources.dependsOn copyLibs
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}
+
+// Copy native libraries to output directory
+task copyNatives(type: Copy) {
+    dependsOn copyLibs
+
+    from 'resources/natives'
+    into 'build/natives'
+}
+
+tasks.jar {
+    dependsOn copyNatives
+    manifest {
+        attributes(
+            'Main-Class': application.mainClass,
+            'Class-Path': configurations.runtimeClasspath.collect { 'lib/' + it.getName() }.join(' ')
+        )
+    }
+}

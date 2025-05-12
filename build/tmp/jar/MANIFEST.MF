@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Main-Class: com.betapig.launcher.BetaPigLauncher
+Class-Path: lib/jinput.jar lib/lwjgl.jar lib/lwjgl_util.jar lib/minecraf
+ t.jar lib/json-20230227.jar lib/commons-io-2.13.0.jar lib/jaxb-runtime-
+ 4.0.3.jar lib/jaxb-core-4.0.3.jar lib/jakarta.xml.bind-api-4.0.0.jar li
+ b/angus-activation-2.0.1.jar lib/jakarta.activation-api-2.1.2.jar lib/t
+ xw2-4.0.3.jar lib/istack-commons-runtime-4.1.2.jar
+
