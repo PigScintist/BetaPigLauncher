@@ -15,24 +15,24 @@ import java.nio.file.FileSystems;
 
 public class GameManager {
     private static GameManager instance;
-    
+
     public static final String MINECRAFT_VERSION = "b1.7.3";
     public static final String SERVER_ADDRESS = "147.185.221.26";
     public static final int SERVER_PORT = 50566;
     public static final String SERVER_NAME = "BetaPig Network";
     public static final String SERVER_VERSION = "Beta 1.7.3";
-    
+
     private static final String GAME_DIR = System.getProperty("user.home") + File.separator + ".betapig";
     private static final String BIN_DIR = GAME_DIR + File.separator + "bin";
     private static final String NATIVES_DIR = GAME_DIR + File.separator + "natives";
     public static final String MODS_DIR = GAME_DIR + File.separator + "mods";
-    
+
     private static final String MODLOADER_JAR = BIN_DIR + File.separator + "modloader.jar";
     private static final String MINECRAFT_JAR = BIN_DIR + File.separator + "minecraft.jar";
     private static final String LWJGL_JAR = BIN_DIR + File.separator + "lwjgl.jar";
     private static final String LWJGL_UTIL_JAR = BIN_DIR + File.separator + "lwjgl_util.jar";
     private static final String JINPUT_JAR = BIN_DIR + File.separator + "jinput.jar";
-    
+
     private static final Map<String, String> REQUIRED_FILES = new HashMap<String, String>() {{
         put("minecraft.jar", "ba66e95ccac442279860f64573f976ff"); // b1.7.3
         put("lwjgl.jar", "6e55ddca0cb6375facfecf1c769b7d77"); // LWJGL 2.8.4
@@ -40,39 +40,39 @@ public class GameManager {
         put("jinput.jar", "b168b014be0186d9e95bf3d263e3a129"); // JInput 2.8.4
         put("modloader.jar", "585948655f59d7418795da3d658d2f7e"); // ModLoader b1.7.3
     }};
-    
+
     public static class ModInfo {
         private final String name;
         private final String version;
         private final String description;
         private final File file;
-        
+
         public ModInfo(String name, String version, String description, File file) {
             this.name = name;
             this.version = version;
             this.description = description;
             this.file = file;
         }
-        
+
         public String getName() { return name; }
         public String getVersion() { return version; }
         public String getDescription() { return description; }
         public File getFile() { return file; }
-        
+
         @Override
         public String toString() {
             return name + (version != null ? " v" + version : "");
         }
     }
-    
+
     public List<ModInfo> getInstalledMods() {
         List<ModInfo> mods = new ArrayList<>();
         File modsDir = new File(MODS_DIR);
-        
+
         if (modsDir.exists() && modsDir.isDirectory()) {
-            File[] modFiles = modsDir.listFiles((dir, name) -> 
-                name.toLowerCase().endsWith(".jar") || name.toLowerCase().endsWith(".zip"));
-            
+            File[] modFiles = modsDir.listFiles((dir, name) ->
+                    name.toLowerCase().endsWith(".jar") || name.toLowerCase().endsWith(".zip"));
+
             if (modFiles != null) {
                 for (File modFile : modFiles) {
                     try (java.util.jar.JarFile jar = new java.util.jar.JarFile(modFile)) {
@@ -81,7 +81,7 @@ public class GameManager {
                         String name = modFile.getName();
                         String version = null;
                         String description = null;
-                        
+
                         if (infoEntry != null) {
                             try (BufferedReader reader = new BufferedReader(
                                     new InputStreamReader(jar.getInputStream(infoEntry)))) {
@@ -97,7 +97,7 @@ public class GameManager {
                                 }
                             }
                         }
-                        
+
                         // If no mod_info.txt, try to find a class that extends BaseMod
                         if (name.equals(modFile.getName())) {
                             java.util.Enumeration<java.util.jar.JarEntry> entries = jar.entries();
@@ -112,15 +112,15 @@ public class GameManager {
                                         String content = new String(buffer, 0, read);
                                         if (content.contains("BaseMod")) {
                                             name = entryName.substring(0, entryName.length() - 6)
-                                                          .replace('/', '.')
-                                                          .replaceAll("^mod_", "");
+                                                    .replace('/', '.')
+                                                    .replaceAll("^mod_", "");
                                             break;
                                         }
                                     }
                                 }
                             }
                         }
-                        
+
                         mods.add(new ModInfo(name, version, description, modFile));
                     } catch (IOException e) {
                         System.err.println("Error reading mod file: " + modFile.getName());
@@ -128,21 +128,21 @@ public class GameManager {
                 }
             }
         }
-        
+
         return mods;
     }
-    
+
     public static GameManager getInstance() {
         if (instance == null) {
             instance = new GameManager();
         }
         return instance;
     }
-    
+
     public interface ProgressCallback {
         void onProgress(String status, int progress);
     }
-    
+
     public void downloadAndLaunchGame(String username, ProgressCallback callback) {
         callback.onProgress("Checking Minecraft version " + MINECRAFT_VERSION, 0);
         new SwingWorker<Void, Integer>() {
@@ -153,7 +153,7 @@ public class GameManager {
                     // Launch game
                     callback.onProgress("Launching game...", 95);
                     getInstance().launchGame(username);
-                    
+
                     callback.onProgress("Game launched!", 100);
                 } catch (Exception e) {
                     callback.onProgress("Error: " + e.getMessage(), -1);
@@ -163,7 +163,7 @@ public class GameManager {
             }
         }.execute();
     }
-    
+
     public void launchGame(String username) throws IOException {
         // Verify we're using the correct version
         File minecraftJar = new File(BIN_DIR, "minecraft.jar");
@@ -172,26 +172,26 @@ public class GameManager {
         }
         LauncherSettings settings = new LauncherSettings();
         String memoryMB = settings.getEffectiveMemory();
-        
+
         // Build classpath
         String classpath = String.join(File.pathSeparator,
-            MINECRAFT_JAR,
-            LWJGL_JAR,
-            LWJGL_UTIL_JAR,
-            JINPUT_JAR
+                MINECRAFT_JAR,
+                LWJGL_JAR,
+                LWJGL_UTIL_JAR,
+                JINPUT_JAR
         );
-        
+
         // Find Java 8
         String javaHome = System.getenv("JAVA_HOME_8");
         String javaPath = null;
-        
+
         if (javaHome != null) {
             File java = new File(javaHome, "bin/java.exe");
             if (java.exists()) {
                 javaPath = java.getAbsolutePath();
             }
         }
-        
+
         if (javaPath == null) {
             // Try Program Files
             String[] programDirs = {"C:\\Program Files\\Java", "C:\\Program Files (x86)\\Java"};
@@ -209,61 +209,61 @@ public class GameManager {
                 }
             }
         }
-        
+
         if (javaPath == null) {
             throw new IOException("Could not find Java 8. Please install Java 8 or set JAVA_HOME_8 environment variable.");
         }
-        
+
         // Build command
         ProcessBuilder pb = new ProcessBuilder(
-            javaPath,
-            "-Xmx" + memoryMB + "M",
-            "-Djava.library.path=" + NATIVES_DIR,
-            "-cp", classpath,
-            "net.minecraft.client.Minecraft",
-            username
+                javaPath,
+                "-Xmx" + memoryMB + "M",
+                "-Djava.library.path=" + NATIVES_DIR,
+                "-cp", classpath,
+                "net.minecraft.client.Minecraft",
+                username
         );
-        
+
         pb.directory(new File(GAME_DIR));
         pb.start();
     }
-    
+
     private void createDirectories() throws IOException {
         Files.createDirectories(Paths.get(GAME_DIR));
         Files.createDirectories(Paths.get(BIN_DIR));
         Files.createDirectories(Paths.get(NATIVES_DIR));
         Files.createDirectories(Paths.get(MODS_DIR));
     }
-    
+
     public void install(ProgressCallback callback) throws Exception {
         callback.onProgress("Подготовка...", 0);
         createDirectories();
-        
+
         // Download and install everything with a single progress message
         callback.onProgress("Загрузка файлов игры...", 20);
-        
+
         // Download minecraft.jar
         File minecraftJar = new File(BIN_DIR, "minecraft.jar");
         if (!minecraftJar.exists() || !verifyMd5(minecraftJar, REQUIRED_FILES.get("minecraft.jar"))) {
             copyResourceToFile("lib/minecraft.jar", minecraftJar);
         }
-        
+
         // Download and install ModLoader
         File modloaderJar = new File(MODS_DIR, "modloader.jar");
         if (!modloaderJar.exists() || !verifyMd5(modloaderJar, REQUIRED_FILES.get("modloader.jar"))) {
             copyResourceToFile("lib/modloader.jar", modloaderJar);
             installModLoader(callback);
         }
-        
+
         callback.onProgress("Загрузка файлов игры...", 60);
-        
+
         // Download libraries
         downloadLibraries(callback);
         downloadNatives(callback);
-        
+
         callback.onProgress("Готово!", 100);
     }
-    
+
     private void installModLoader(ProgressCallback callback) throws Exception {
         callback.onProgress("Installing ModLoader...", 80);
         File modLoaderJar = new File(MODS_DIR, "modloader.jar");
@@ -276,19 +276,19 @@ public class GameManager {
                 Files.copy(in, modLoaderJar.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
         }
-        
+
         // Create temporary jar
         File minecraftJar = new File(BIN_DIR, "minecraft.jar");
         File tempJar = new File(BIN_DIR, "minecraft.jar.tmp");
-        
+
         // Copy minecraft.jar to temp file, excluding META-INF
         try (java.util.jar.JarFile sourceJar = new java.util.jar.JarFile(minecraftJar);
              java.util.jar.JarOutputStream tempJarStream = new java.util.jar.JarOutputStream(
-                     Files.newOutputStream(tempJar.toPath()))) {
-            
+                     new FileOutputStream(tempJar))) {
+
             // Track entries to avoid duplicates
             HashSet<String> entries = new HashSet<>();
-            
+
             // First copy ModLoader files
             try (java.util.jar.JarFile modLoader = new java.util.jar.JarFile(modLoaderJar)) {
                 java.util.Enumeration<java.util.jar.JarEntry> modLoaderEntries = modLoader.entries();
@@ -301,7 +301,7 @@ public class GameManager {
                     }
                 }
             }
-            
+
             // Then copy minecraft.jar files, skipping duplicates
             java.util.Enumeration<java.util.jar.JarEntry> sourceEntries = sourceJar.entries();
             while (sourceEntries.hasMoreElements()) {
@@ -359,19 +359,19 @@ public class GameManager {
         String osName = System.getProperty("os.name").toLowerCase();
         String arch = System.getProperty("os.arch");
         boolean is64Bit = arch.contains("64");
-        
+
         String nativesName = osName.contains("windows") ? "windows" :
-                            osName.contains("mac") ? "macos" :
-                            "linux";
-        
+                osName.contains("mac") ? "macos" :
+                        "linux";
+
         // List of native files needed for Windows
         String[] nativeFiles = {
-            "jinput-dx8.dll",
-            "jinput-raw.dll",
-            "lwjgl.dll",
-            "OpenAL32.dll"
+                "jinput-dx8.dll",
+                "jinput-raw.dll",
+                "lwjgl.dll",
+                "OpenAL32.dll"
         };
-        
+
         // Copy each native file
         for (String fileName : nativeFiles) {
             File targetFile = new File(NATIVES_DIR, fileName);
@@ -386,7 +386,7 @@ public class GameManager {
             }
         }
     }
-    
+
     private boolean verifyMd5(File file, String expectedMd5) {
         try {
             byte[] bytes = Files.readAllBytes(file.toPath());
@@ -397,7 +397,7 @@ public class GameManager {
             return false;
         }
     }
-    
+
     private void copyResourceToFile(String resourcePath, File targetFile) throws IOException {
         try (InputStream in = getClass().getResourceAsStream("/" + resourcePath)) {
             if (in == null) {
@@ -406,14 +406,14 @@ public class GameManager {
             Files.copy(in, targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
     }
-    
+
     private String buildClasspath() {
         StringBuilder classpath = new StringBuilder();
         classpath.append(MINECRAFT_JAR).append(File.pathSeparator);
         classpath.append(LWJGL_JAR).append(File.pathSeparator);
         classpath.append(LWJGL_UTIL_JAR).append(File.pathSeparator);
         classpath.append(JINPUT_JAR);
-        
+
         // Add all mods from mods directory
         File modsDir = new File(MODS_DIR);
         if (modsDir.exists()) {
@@ -424,7 +424,7 @@ public class GameManager {
                 }
             }
         }
-        
+
         return classpath.toString();
     }
 }
