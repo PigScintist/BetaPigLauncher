@@ -13,7 +13,7 @@ A custom Minecraft launcher for BetaPig server running Minecraft Beta 1.7.3.
 ## Requirements
 
 - Java 8 or higher
-- Maven for building
+- Gradle
 
 ## Building
 
